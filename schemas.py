@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import List
 
 class UserCreate(BaseModel):
     username: str
@@ -12,19 +11,34 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class StockCreate(BaseModel):
+class AdjustStock(BaseModel):
     ticker: str
-
-class StockResponse(BaseModel):
-    id: int
-    ticker: str
+    held: float
 
     class Config:
         from_attributes = True
 
-class Token(BaseModel):
+class StockValueResponse(BaseModel):
+    ticker: str
+    held: float
+    price: float
+    total_value: float
+    percentage_of_portfolio: float
+
+
+    class Config:
+        from_attributes = True
+ 
+class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+    class Config:
+        from_attributes = True
+
+class PortfolioResponse(BaseModel):
+    portfolio: list[StockValueResponse]
+    total_portfolio_value: float
 
     class Config:
         from_attributes = True
