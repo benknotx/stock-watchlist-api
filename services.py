@@ -9,13 +9,13 @@ load_dotenv()
 finnhub_client = finnhub.Client(api_key=os.getenv("FINNHUB_API_KEY"))
 
 def get_stock_price(ticker: str) -> float:
-    normalized_ticker = ticker.strip().upper()
+    tick = normalize_ticker(ticker)
     try:
-        quote = finnhub_client.quote(normalized_ticker)
+        quote = finnhub_client.quote(tick)
         return quote.get("c")
     except Exception as e:
         # would log the error here in a real application
-        print(f"Error fetching stock price for {normalized_ticker}: {e}")
+        print(f"Error fetching stock price for {tick}: {e}")
         return None
 
 
@@ -71,4 +71,18 @@ def test_db_connection(db):
         return True
     except Exception as e:
         print(f"Database connection error: {e}")
+        return False
+    
+def normalize_ticker(ticker: str) -> str:
+    return ticker.strip().upper()
+
+def validate_ticker(ticker: str) -> bool:
+    tick = normalize_ticker(ticker)
+    attempt = finnhub_client.quote(tick)
+    attempt_value = attempt.get("c")
+    try:
+        if attempt_value != 0:
+            return True
+    except Exception as e:
+        print(f"Error validating ticker {tick}: {e}")
         return False

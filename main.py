@@ -51,8 +51,11 @@ def read_user(current_user: models.User = Depends(auth.get_current_user)):
 
 @app.post("/portfolio/stocks", response_model=schemas.AdjustStock)
 def adjust_stocks_in_portfolio(stock: schemas.AdjustStock, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
-    normalized_ticker = stock.ticker.strip().upper()
+    normalized_ticker = services.normalize_ticker(stock.ticker)
     existing_stock = db.query(models.Stock).filter(models.Stock.ticker == normalized_ticker).first()
+    validadate_ticker = services.validate_ticker(normalized_ticker)
+    if not validadate_ticker:
+        raise HTTPException(status_code=400, detail="Invalid stock ticker")
     if not existing_stock:
         existing_stock = models.Stock(ticker=normalized_ticker)
         db.add(existing_stock)
@@ -87,6 +90,9 @@ def get_portfolio_value(current_user: models.User = Depends(auth.get_current_use
 
 @app.get("/stock/{ticker}/value")
 def get_stock_value(ticker: str, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    validate_ticker = services.validate_ticker(ticker)
+    if not validate_ticker:
+        raise HTTPException(status_code=400, detail="Invalid stock ticker")
     stock_value = services.get_stock_price(ticker)
     if stock_value is None:
         raise HTTPException(status_code=404, detail="Stock value not found")
@@ -106,7 +112,6 @@ def delete_stock_from_portfolio(ticker: str, current_user: models.User = Depends
     
     db.delete(holding)
     db.commit()
-    db.refresh()
     
     return {"message": f"Removed {normalized_ticker} from portfolio"}
 
